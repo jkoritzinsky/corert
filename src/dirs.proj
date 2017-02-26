@@ -6,13 +6,14 @@
     <ExcludeProjects Condition="'$(OSEnvironment)'!='Windows_NT'" Include="**\TypeSystem.Tests.csproj" />
     <ExcludeProjects Condition="'$(OSEnvironment)'!='Windows_NT'" Include="**\ILCompiler.MetadataTransform.Tests.csproj" />
 
-    <!-- This project builds against full .NET Framework for now -->
-    <ExcludeProjects Condition="'$(OSEnvironment)'!='Windows_NT'" Include="**\ILVerify.csproj" />
+    <Project Include="AotPackageReference\AotPackageReference.depproj" />
 
     <Project Include="*\src\*.csproj" Exclude="@(ExcludeProjects)" />
     <Project Include="*\src\*.vbproj" Condition="'$(IncludeVbProjects)'!='false'" Exclude="@(ExcludeProjects)" />
     <Project Include="*\test*\**\*.csproj" Exclude="@(ExcludeProjects)" />
     <Project Include="*\test*\**\*.vbproj" Condition="'$(IncludeVbProjects)'!='false'" Exclude="@(ExcludeProjects)" />
+
+    <Project Include="ILCompiler\repro\repro.csproj" />
   </ItemGroup>
 
   <Import Project="..\dir.targets" />

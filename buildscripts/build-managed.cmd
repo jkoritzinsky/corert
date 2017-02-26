@@ -30,9 +30,6 @@ exit /b %ERRORLEVEL%
 rem Explicitly set Platform causes conflicts in managed project files. Clear it to allow building from VS x64 Native Tools Command Prompt
 set Platform=
 
-:: Restore the Tools directory
-call  "%__ProjectDir%\init-tools.cmd"
-
 rem Tell nuget to always use repo-local nuget package cache. The "dotnet restore" invocations use the --packages
 rem argument, but there are a few commands in publish and tests that do not.
 set "NUGET_PACKAGES=%__PackagesDir%"

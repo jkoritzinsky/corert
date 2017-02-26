@@ -18,12 +18,17 @@
     <CLSCompliant Condition="'$(CLSCompliant)'==''">false</CLSCompliant>
   </PropertyGroup>
 
-  <!-- Setting IsTestProject prior to Build.Common.targets -->
-  <PropertyGroup>
-    <IsTestProject Condition="'$(IsTestProject)'=='' And $(MSBuildProjectName.EndsWith('.tests', StringComparison.OrdinalIgnoreCase))">true</IsTestProject>
+  <!-- Force .dll extension for .NETCoreApp projects even if output type is exe. -->
+  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp' and '$(OutputType)' == 'Exe'">
+    <TargetExt Condition="'$(TargetExt)' == ''">.dll</TargetExt>
   </PropertyGroup>
 
   <Import Project="$(ToolsDir)/Build.Common.targets" />
+
+  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp' and '$(OutputType)' == 'Exe'">
+    <RunCommand>dotnet</RunCommand>
+    <RunArguments>exec &quot;$(TargetPath)&quot; $(StartArguments)</RunArguments>
+  </PropertyGroup>
 
   <!-- Override corefx multi targeting support -->
   <Target Name="ConvertCommonMetadataToAdditionalProperties" BeforeTargets="AssignProjectConfiguration" />
