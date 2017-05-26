@@ -185,6 +185,8 @@ namespace System.Reflection.Runtime.MethodInfos
             return RuntimeParameters;
         }
 
+        public abstract override bool HasSameMetadataDefinitionAs(MemberInfo other);
+
         [DebuggerGuidedStepThroughAttribute]
         public sealed override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
         {
@@ -432,7 +434,11 @@ namespace System.Reflection.Runtime.MethodInfos
                     if (!delegateParameterEnumerator.MoveNext())
                         return null;
                     isOpen = true;
-                    if (!IsAssignableFrom(executionEnvironment, this.DeclaringType, delegateParameterEnumerator.Current.ParameterType))
+                    Type firstParameterOfMethodType = this.DeclaringType;
+                    if (firstParameterOfMethodType.IsValueType)
+                        firstParameterOfMethodType = firstParameterOfMethodType.MakeByRefType();
+
+                    if (!IsAssignableFrom(executionEnvironment, firstParameterOfMethodType, delegateParameterEnumerator.Current.ParameterType))
                         return null;
                     if (target != null)
                         return null;
