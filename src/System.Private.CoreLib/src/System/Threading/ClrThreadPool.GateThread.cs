@@ -13,6 +13,7 @@ namespace System.Threading
         {
             private const int GateThreadDelayMs = 500;
             private const int DequeueDelayThresholdMs = GateThreadDelayMs * 2;
+            private const int GateThreadRunningMask = 0x4;
 
             private static RuntimeThread s_gateThread;
 
@@ -81,7 +82,7 @@ namespace System.Threading
                                 }
                             }
                         }
-                    } while (Interlocked.Decrement(ref numRunsRemaining) > 0);
+                    } while (Interlocked.Decrement(ref numRunsRemaining) > GetRunningMaskForNumRuns(0));
                 }
             }
 
@@ -109,6 +110,7 @@ namespace System.Threading
 
             private static RuntimeThread CreateRuntimeThread()
             {
+                Debug.Assert(s_gateThread == null);
                 RuntimeThread gateThread = RuntimeThread.Create(GateThreadStart);
                 gateThread.IsBackground = true;
                 return gateThread;
@@ -117,37 +119,37 @@ namespace System.Threading
             // This is called by a worker thread
             internal static void EnsureRunning()
             {
-                if (s_gateThread == null)
+                int numRunsMask = Interlocked.Exchange(ref numRunsRemaining, GetRunningMaskForNumRuns(2));
+                if ((numRunsMask & GateThreadRunningMask) == 0)
                 {
-                    CreateGateThread();
+                    try
+                    {
+                        CreateGateThread();
+                        runGateThreadEvent.Set();
+                    }
+                    catch (Exception)
+                    {
+                        Interlocked.Exchange(ref numRunsRemaining, 0);
+                        throw;
+                    }
                 }
-
-                if (Interlocked.Exchange(ref numRunsRemaining, 2) == 0)
+                else if (numRunsMask == GetRunningMaskForNumRuns(0))
                 {
                     runGateThreadEvent.Set();
                 }
             }
 
+            private static int GetRunningMaskForNumRuns(int numRuns)
+            {
+                Debug.Assert(numRuns >= 0);
+                Debug.Assert(numRuns < GateThreadRunningMask);
+                return GateThreadRunningMask | numRuns;
+            }
+
             private static void CreateGateThread()
             {
-                bool createdGateThread = false;
-                try
-                {
-                    s_createdLock.Acquire();
-                    if (s_gateThread == null)
-                    {
-                        s_gateThread = CreateRuntimeThread();
-                        createdGateThread = true;
-                    }
-                }
-                finally
-                {
-                    s_createdLock.Release();
-                }
-                if (createdGateThread)
-                {
-                    s_gateThread.Start();
-                }
+                s_gateThread = CreateRuntimeThread();
+                s_gateThread.Start();
             }
         }
     }
