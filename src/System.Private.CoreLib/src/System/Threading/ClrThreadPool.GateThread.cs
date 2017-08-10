@@ -14,9 +14,7 @@ namespace System.Threading
             private const int GateThreadDelayMs = 500;
             private const int DequeueDelayThresholdMs = GateThreadDelayMs * 2;
             private const int GateThreadRunningMask = 0x4;
-
-            private static RuntimeThread s_gateThread;
-
+            
             private static int numRunsRemaining;
 
             private static AutoResetEvent runGateThreadEvent = new AutoResetEvent(false);
@@ -108,14 +106,6 @@ namespace System.Threading
                 return delay > minimumDelay;
             }
 
-            private static RuntimeThread CreateRuntimeThread()
-            {
-                Debug.Assert(s_gateThread == null);
-                RuntimeThread gateThread = RuntimeThread.Create(GateThreadStart);
-                gateThread.IsBackground = true;
-                return gateThread;
-            }
-
             // This is called by a worker thread
             internal static void EnsureRunning()
             {
@@ -148,8 +138,9 @@ namespace System.Threading
 
             private static void CreateGateThread()
             {
-                s_gateThread = CreateRuntimeThread();
-                s_gateThread.Start();
+                RuntimeThread gateThread = RuntimeThread.Create(GateThreadStart);
+                gateThread.IsBackground = true;
+                gateThread.Start();
             }
         }
     }
